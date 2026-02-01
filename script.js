@@ -4826,6 +4826,7 @@ async function resetSalvaHistory() {
       streak: 0,
       freezes: 0,
       frozenDays: [],
+      achievements: [], // Reset achievements/logros
       lastReset: Date.now(),
     };
 
