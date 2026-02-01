@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Rich Emerald Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#34d399;stop-opacity:1" /> <!-- Emerald 400 -->
+      <stop offset="100%" style="stop-color:#065f46;stop-opacity:1" /> <!-- Emerald 800 -->
+    </linearGradient>
+    
+    <!-- Soft Shadow for Depth -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="15"/>
+      <feOffset dx="0" dy="8" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge> 
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/> 
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background Container (Rounded Soft Square) -->
+  <rect x="0" y="0" width="512" height="512" rx="128" fill="url(#bgGrad)" />
+
+  <!-- Main Composition Group (Centered) -->
+  <g transform="translate(256, 256) rotate(-45) translate(-256, -256)" filter="url(#dropShadow)">
+      
+      <!-- Dumbbell Handle -->
+      <rect x="176" y="236" width="160" height="40" rx="20" fill="#ffffff" opacity="0.9"/>
+      
+      <!-- Weights (Hexagonal Style for modern look) -->
+      <!-- Left Weight -->
+      <path d="M120,186 L176,186 L176,326 L120,326 Q110,326 106,316 L86,256 Q84,250 86,244 L106,196 Q110,186 120,186 Z" fill="#ffffff" />
+      <rect x="140" y="186" width="15" height="140" fill="#e2e8f0" opacity="0.3"/> <!-- Detail line -->
+
+      <!-- Right Weight -->
+      <path d="M392,186 L336,186 L336,326 L392,326 Q402,326 406,316 L426,256 Q428,250 426,244 L406,196 Q402,186 392,186 Z" fill="#ffffff" />
+      <rect x="357" y="186" width="15" height="140" fill="#e2e8f0" opacity="0.3"/> <!-- Detail line -->
+      
+      <!-- Organic Leaf Wrapping the Handle -->
+      <path d="M256,236 C256,236 296,180 326,180 C346,180 356,200 336,220 C316,240 256,276 256,276" fill="#10b981" />
+      <path d="M256,276 C256,276 216,332 186,332 C166,332 156,312 176,292 C196,272 256,236 256,236" fill="#10b981" />
+      
+      <!-- Leaf Veins -->
+      <path d="M260,240 L310,190" stroke="#059669" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+      <path d="M252,272 L202,322" stroke="#059669" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+
+  </g>
+</svg>
