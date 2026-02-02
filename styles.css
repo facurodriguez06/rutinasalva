@@ -2,14 +2,21 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap");
 
 body {
+  overflow-x: hidden; /* CRÍTICO: Bloquea desbordamiento horizontal global */
   font-family: "Inter", sans-serif;
   background-color: #071018;
   /* cold dark blue-black */
   color: #bae6fd;
   /* cyan-200 for cool text */
+  /* cyan-200 for cool text */
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
+}
+
+/* Permitir scroll solo en contenedores específicos si es necesario */
+.overflow-x-auto {
+  overflow-x: auto !important;
 }
 
 /* Los colores slate ahora vienen de tailwind.config con tinte violeta */

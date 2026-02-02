@@ -618,6 +618,17 @@ function applyTheme() {
 // Apply saved theme on load
 // Apply saved theme on load
 document.addEventListener("DOMContentLoaded", () => {
+  // Splash Screen Logic
+  setTimeout(() => {
+    const splash = document.getElementById("splash-screen");
+    if (splash) {
+      splash.classList.add("opacity-0", "pointer-events-none");
+      setTimeout(() => {
+        splash.remove();
+      }, 500); // Esperar a que termine la transición CSS
+    }
+  }, 2000); // 2 segundos de duración
+
   applyTheme();
 
   // Format Date for Header and Sidebar
@@ -3755,7 +3766,7 @@ function renderTabs() {
                         } ${isActive ? "active-tab-label" : ""}">${
                           day.day
                         }</span>
-                        <span class="font-medium text-sm">${day.title}</span>
+                        <span class="font-medium text-sm whitespace-normal leading-tight text-left break-words max-w-[120px] md:max-w-none">${day.title}</span>
                     </div>
                     <i data-lucide="chevron-right" class="w-4 h-4 transition-all duration-300 relative z-10 ${
                       isActive
@@ -3871,6 +3882,23 @@ function renderContent() {
       // "cuadrito de cada dia y su contenido tengan el mismo color" -> implies tint.
       cardClasses += `bg-slate-900 border-slate-800 hover:border-${activeColor}-500/50 hover:shadow-xl hover:shadow-${activeColor}-900/10`;
     }
+    // Check for skipped state
+    const timerSetKey = `${activeTab}-${idx}-0`;
+    const isSkipped =
+      completedSets[timerSetKey] &&
+      completedSets[timerSetKey].salva === "skipped";
+
+    // Add active-theme class for CSS styling
+    cardClasses = `animate-slide-up ${staggerClass} relative group p-0 rounded-2xl border transition-all duration-300 overflow-hidden flex flex-col md:flex-row active-theme-${activeColor} `;
+
+    if (isSkipped) {
+      cardClasses += "opacity-60 grayscale bg-slate-900 border-slate-800";
+    } else if (isExerciseCompleted) {
+      cardClasses += `bg-${activeColor}-900/10 border-${activeColor}-900/20 opacity-80 scale-[0.99]`;
+    } else {
+      // Use standard slate for inactive
+      cardClasses += `bg-slate-900 border-slate-800 hover:border-${activeColor}-500/50 hover:shadow-xl hover:shadow-${activeColor}-900/10`;
+    }
     card.className = cardClasses;
 
     const muscleMapHTML = getMuscleMapSVG(
@@ -3891,20 +3919,31 @@ function renderContent() {
 
       setButtonsHTML = `
         <div class="flex items-center gap-3">
-          <button onclick="startWarmupTimer(${Math.ceil(timeMinutes)}, '${exercise.name.replace(/'/g, "\\'")}')" 
+          <button onclick="startWarmupTimer(${Math.ceil(timeMinutes)}, '${exercise.name.replace(/'/g, "\\'")}', '${setKey}')" 
             class="flex items-center gap-2 px-4 py-2 bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-600/50 rounded-xl font-bold transition-all">
             <i data-lucide="timer" class="w-5 h-5"></i>
             <span>${exercise.reps}</span>
           </button>
-          <button data-set-key="${setKey}" data-user="salva" data-exercise-name="${exercise.name}" data-rest-time="0"
-            class="set-btn w-10 h-10 rounded-xl font-bold text-xs transition-all duration-200 flex items-center justify-center border
-            ${
-              setData.salva
-                ? `bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/20`
-                : `bg-slate-50 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-emerald-500/50 hover:text-emerald-500`
-            }" title="Marcar completado">
-            ${setData.salva ? '<i data-lucide="check" class="w-5 h-5"></i>' : '<i data-lucide="check" class="w-4 h-4"></i>'}
-          </button>
+          <div class="flex flex-col gap-1">
+             <button data-set-key="${setKey}" data-user="salva" data-exercise-name="${exercise.name}" data-rest-time="0"
+                class="set-btn w-10 h-10 rounded-xl font-bold text-xs transition-all duration-200 flex items-center justify-center border
+                ${
+                  setData.salva === true
+                    ? `bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/20`
+                    : setData.salva === "skipped"
+                      ? `bg-slate-700 text-slate-400 border-slate-600`
+                      : `bg-slate-50 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-emerald-500/50 hover:text-emerald-500`
+                }" title="Marcar completado (o saltado)">
+                ${
+                  setData.salva === true
+                    ? '<i data-lucide="check" class="w-5 h-5"></i>'
+                    : setData.salva === "skipped"
+                      ? '<i data-lucide="skip-forward" class="w-4 h-4"></i>'
+                      : '<i data-lucide="check" class="w-4 h-4"></i>'
+                }
+             </button>
+             ${setData.salva === "skipped" ? '<span class="text-[9px] text-slate-500 font-mono text-center">OMITIDO</span>' : ""}
+          </div>
         </div>
       `;
     } else {
@@ -4496,7 +4535,7 @@ if (exportBtn) {
 }
 
 // --- WARMUP TIMER ---
-function startWarmupTimer(minutes, exerciseName) {
+function startWarmupTimer(minutes, exerciseName, setKey = null) {
   const totalSeconds = minutes * 60;
   let currentSeconds = totalSeconds;
 
@@ -4612,6 +4651,13 @@ function startWarmupTimer(minutes, exerciseName) {
   });
 
   closeBtn.addEventListener("click", () => {
+    // Logic for SKIP
+    if (setKey) {
+      if (!completedSets[setKey]) completedSets[setKey] = {};
+      completedSets[setKey].salva = "skipped";
+      localStorage.setItem("gymSalvaSets", JSON.stringify(completedSets));
+      if (typeof renderContent === "function") renderContent();
+    }
     clearInterval(timerInterval);
     overlay.remove();
     // Also remove mini bubble if exists
@@ -4784,11 +4830,13 @@ function updateGamificationUI() {
   const container = document.getElementById("streak-display");
   if (container) {
     container.classList.remove("hidden");
-    container.classList.add("flex", "gap-3", "justify-start", "flex-nowrap"); // Force horizontal layout
+    // Responsive Stack: Horizontal on mobile too (Compact View)
+    container.className =
+      "flex flex-row items-center gap-2 md:gap-3 justify-start pb-3 flex-wrap";
     // NOTE: We do NOT overwrite className to avoid breaking HTML structure
 
     container.innerHTML = `
-            <div class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-emerald-500/30 shadow-sm transition-transform active:scale-95 cursor-pointer" onclick="openShopModal('salva')">
+            <div class="flex items-center gap-2 bg-slate-800/80 px-3 py-1 rounded-full border border-emerald-500/30 shadow-sm transition-transform active:scale-95 cursor-pointer" onclick="openShopModal('salva')">
                 <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Salva</span>
                 <div class="flex items-center gap-1">
                     <i data-lucide="flame" class="w-3 h-3 ${gamification.salva.streak > 0 ? "text-orange-500 fill-orange-500" : "text-slate-600"}"></i>
@@ -4985,6 +5033,17 @@ function openShopModal(user) {
 
   const points = gamification[user].points;
   title.textContent = `${user.toUpperCase()} - ${points} GEMAS`;
+
+  // Update Freeze Count
+  const freezes = gamification[user].freezes || 0;
+  const freezeCountEl = document.getElementById("shop-freeze-count");
+  if (freezeCountEl) {
+    freezeCountEl.textContent = `${freezes} en inv.`;
+    freezeCountEl.className =
+      freezes > 0
+        ? "text-[10px] font-bold bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/30"
+        : "text-[10px] font-bold bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full border border-slate-600";
+  }
 
   btn.onclick = () => buyFreeze(user);
 
